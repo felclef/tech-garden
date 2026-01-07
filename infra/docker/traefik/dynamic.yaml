@@ -1,0 +1,20 @@
+http:
+  routers:
+    # gateway, router, control plane, etc.
+    cells-lb:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: cells-weighted
+      priority: 100
+
+  services:
+    cells-weighted:
+      weighted:
+        services:
+          - name: cell-a@docker
+            weight: 1
+          - name: cell-b@docker
+            weight: 1
+          - name: cell-c@docker
+            weight: 1

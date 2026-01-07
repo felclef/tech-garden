@@ -1,0 +1,111 @@
+version: '3.8'
+
+networks:
+  techgarden:
+    driver: bridge
+
+services:
+  tunnel:
+      image: cloudflare/cloudflared:latest
+      container_name: techgarden-tunnel
+      restart: unless-stopped
+      environment:
+        - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+      command: tunnel run
+      networks:
+        - techgarden
+
+  # Control Plane (gateway)
+  traefik:
+    image: traefik:v3.0
+    user: "0:0"
+    security_opt:
+      - label=disable
+    container_name: techgarden-gateway
+    depends_on:
+      - cell-a
+      - cell-b
+      - cell-c
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=docker_techgarden"
+      - "--providers.file.filename=/etc/traefik/dynamic.yaml"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:8000"
+      - "--ping=true"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    ports:
+      - "8080:8000"
+      - "8081:8080"
+    volumes:
+      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:z,U
+      - ./traefik/dynamic.yaml:/etc/traefik/dynamic.yaml:ro,z
+    networks:
+      - techgarden
+    labels:
+      - "traefik.enable=false"
+
+  # Data Plane - a service per cell, each same load
+  cell-a:
+    build:
+      context: ../../apps/cell-service
+      dockerfile: Dockerfile
+    container_name: techgarden-cell-a
+    environment:
+      - CELL_ID=cell-a
+      - PORT=3000
+      - RUST_LOG=info
+    networks:
+      - techgarden
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=docker_techgarden"
+      - "traefik.http.services.cell-a.loadbalancer.server.port=3000"
+      - "traefik.http.routers.cell-a.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.cell-a.entrypoints=web"
+      - "traefik.http.routers.cell-a.service=cell-a"
+      - "traefik.http.routers.cell-a.priority=1"
+
+  cell-b:
+    build:
+      context: ../../apps/cell-service
+      dockerfile: Dockerfile
+    container_name: techgarden-cell-b
+    environment:
+      - CELL_ID=cell-b
+      - PORT=3000
+      - RUST_LOG=info
+    networks:
+      - techgarden
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=docker_techgarden"
+      - "traefik.http.services.cell-b.loadbalancer.server.port=3000"
+      - "traefik.http.routers.cell-b.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.cell-b.entrypoints=web"
+      - "traefik.http.routers.cell-b.service=cell-b"
+      - "traefik.http.routers.cell-b.priority=1"
+
+  cell-c:
+    build:
+      context: ../../apps/cell-service
+      dockerfile: Dockerfile
+    container_name: techgarden-cell-c
+    environment:
+      - CELL_ID=cell-c
+      - PORT=3000
+      - RUST_LOG=info
+    networks:
+      - techgarden
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=docker_techgarden"
+      - "traefik.http.services.cell-c.loadbalancer.server.port=3000"
+      - "traefik.http.routers.cell-c.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.cell-c.entrypoints=web"
+      - "traefik.http.routers.cell-c.service=cell-c"
+      - "traefik.http.routers.cell-c.priority=1"
