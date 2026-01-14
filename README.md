@@ -8,6 +8,8 @@ E eu quero voltar a ter meu e-mail com domínio meu, currículo fora das redes s
 
 pq não?
 
+Para histórico caótico além do git logs (que eu faço vários squash pq sim), vide [journal.md](journal.md).
+
 ## Fase Atual: 1 - Célula Zero do Control Plane
 
 ### Objetivo
@@ -25,7 +27,9 @@ Validar a separação entre Control Plane e Data Plane, no esquema hello world e
 
 Na raiz:
 ```bash
-docker-compose -f infra/docker/docker-compose.yaml up --build
+
+docker compose -f infra/docker/docker-compose.yaml up --build
+
 ```
 
 **Validar as células:**
@@ -63,7 +67,7 @@ docker exec techgarden-gateway wget -qO- http://localhost:8080/api/rawdata | jq 
 
 **logs:**
 ```bash
-docker-compose -f infra/docker/docker-compose.yaml logs -f cell-a cell-b cell-c
+docker compose -f infra/docker/docker-compose.yaml logs -f cell-a cell-b cell-c
 
 ```
 

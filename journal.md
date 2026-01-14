@@ -1,5 +1,58 @@
 # Journal - Tech Garden - Cellular Lab Environment Fabric
 
+## 2025-01-14 | Fase 1: retomada no CachyOS como host, from Bazzite
+**Aviso:**
+"Disclaimer" é prefixado com "dis" e "claimer" é quem tá fazendo uma claim né rs
+
+Enfim, este documento é um dump de histórico, escrito por mim ou pelo rubber duck da vez.
+
+Tem vezes que eu copio o arquivo, mando pra algum dos chats de LLM e conto oq rolou no dia, ponho diff do git e mando fazer a entry.
+
+Tem vezes que eu mesmo escrevo. Portanto, há de haver haver-se-á inconsistências. Mais ainda do que já esperado.
+
+btw, pt-br ftw - cheers! /s (não que eu ache que precisava, mas 2026...)
+
+**Novidades:**
+- migrei minha host local para CachyOS, invés do Bazzite
+- estou de férias e esperando dia de viagem
+- zero motivos, mas... enfim
+- sistema agora não é immutable e tem docker de vdd - yay (tem yay tb)
+- ...
+
+**Problemas:**
+- service does not exist
+
+```
+techgarden-gateway  | 2026-01-14T18:33:09Z ERR error="the service \"cell-a@docker\" does not exist" entryPointName=web routerName=cells-lb@file
+techgarden-gateway  | 2026-01-14T18:33:09Z ERR error="the service \"cell-b@docker\" does not exist" entryPointName=web routerName=cells-lb@file
+```
+
+- removi a gambiarra do podman com socket fixo no compose, na `.env` usei o docker default
+
+```
+# no .env
+- DOCKER_SOCK=/run/user/1000/podman/podman.sock
++ DOCKER_SOCK=/var/run/docker.sock
+
+# removi isso aqui do composer, só o podman precisa, entao fica aqui por histórico, se for útil
+traefic:
+(...)
+    # immutable (e.g. bazzite - using podman & distrobox)
+    # user: "0:0"
+    # security_opt:
+    #   - label=disable
+```
+
+- nome da rede ajustado, de `docker_techgarden` para apenas `techgarden`
+
+- API version
+
+```
+error="Error response from daemon: client version 1.24 is too old. Minimum supported API version is 1.44, please upgrade your client to a newer version"
+```
+
+- atualizei versao da imagem, gg
+
 ## 2025-01-07 | Fase 1: Alicerce (célula... zero? unknown?? control plane!)
 
 ### Decisões
@@ -148,7 +201,7 @@ tech-garden %
 
 ---
 
-### Status: ✅ Fase 1 (Passos 1-3) Completa + Tunnel Público
+### Status:  Fase 1 (Passos 1-3) Completa + Tunnel Público
 
 Próximos passos candidatos:
 - [ ] adicionar redis para state compartilhado (testar failure scenarios)
